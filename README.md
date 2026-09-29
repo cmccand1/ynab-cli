@@ -135,7 +135,13 @@ All commands return JSON. Use `--compact` for minified output.
 
 ## API Limitations
 
-The YNAB API does not support creating categories, category groups, or payees. Use the web or mobile app for these.
+The YNAB API does not support updating accounts. Use the web or mobile app for this.
+
+The API supports creating payees, categories, and category groups. Use raw API access for these:
+
+```bash
+ynab api POST /plans/{plan_id}/payees --data '{"payee": {"name": "Coffee Shop"}}'
+```
 
 Rate limit: 200 requests/hour per token. If exceeded, wait 5-10 minutes.
 
