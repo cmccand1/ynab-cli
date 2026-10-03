@@ -12,6 +12,21 @@ vi.mock('@napi-rs/keyring', () => ({
   },
 }));
 
+// In-memory stand-in so tests never touch the user's real config file
+const mockConfigStore: { defaultBudget?: string } = {};
+
+vi.mock('./config.js', () => ({
+  config: {
+    getDefaultBudget: () => mockConfigStore.defaultBudget,
+    setDefaultBudget: (budgetId: string) => {
+      mockConfigStore.defaultBudget = budgetId;
+    },
+    clearDefaultBudget: () => {
+      delete mockConfigStore.defaultBudget;
+    },
+  },
+}));
+
 import { AuthManager, resetKeyringForTesting } from './auth.js';
 import { config } from './config.js';
 
