@@ -2,8 +2,7 @@ import * as ynab from 'ynab';
 import { config } from './config.js';
 import { YnabCliError, sanitizeApiError } from './errors.js';
 import { auth, type ResolvedCredential } from './auth.js';
-
-type TransactionTypeFilter = 'uncategorized' | 'unapproved' | undefined;
+import { parseTypeFilter } from './utils.js';
 
 function isUnauthorizedError(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) {
@@ -241,12 +240,13 @@ export class YnabClient {
     type?: string;
     lastKnowledgeOfServer?: number;
   }) {
+    const type = parseTypeFilter(params.type);
     const api = await this.getApi();
     const id = await this.getBudgetId(params.budgetId);
     const response = await api.transactions.getTransactions(
       id,
       params.sinceDate,
-      params.type as TransactionTypeFilter,
+      type,
       params.lastKnowledgeOfServer
     );
     return {
@@ -264,13 +264,14 @@ export class YnabClient {
       lastKnowledgeOfServer?: number;
     }
   ) {
+    const type = parseTypeFilter(params.type);
     const api = await this.getApi();
     const id = await this.getBudgetId(params.budgetId);
     const response = await api.transactions.getTransactionsByAccount(
       id,
       accountId,
       params.sinceDate,
-      params.type as TransactionTypeFilter,
+      type,
       params.lastKnowledgeOfServer
     );
     return {
@@ -288,13 +289,14 @@ export class YnabClient {
       lastKnowledgeOfServer?: number;
     }
   ) {
+    const type = parseTypeFilter(params.type);
     const api = await this.getApi();
     const id = await this.getBudgetId(params.budgetId);
     const response = await api.transactions.getTransactionsByCategory(
       id,
       categoryId,
       params.sinceDate,
-      params.type as TransactionTypeFilter,
+      type,
       params.lastKnowledgeOfServer
     );
     return {
@@ -312,13 +314,14 @@ export class YnabClient {
       lastKnowledgeOfServer?: number;
     }
   ) {
+    const type = parseTypeFilter(params.type);
     const api = await this.getApi();
     const id = await this.getBudgetId(params.budgetId);
     const response = await api.transactions.getTransactionsByPayee(
       id,
       payeeId,
       params.sinceDate,
-      params.type as TransactionTypeFilter,
+      type,
       params.lastKnowledgeOfServer
     );
     return {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeTransactions, findTransferCandidates, type SummaryTransaction } from './utils.js';
+import { summarizeTransactions, findTransferCandidates, parseTypeFilter, type SummaryTransaction } from './utils.js';
 
 function makeTx(overrides: Partial<SummaryTransaction> = {}): SummaryTransaction {
   return {
@@ -139,5 +139,24 @@ describe('findTransferCandidates', () => {
     expect(candidates[0].date_difference_days).toBe(0);
     expect(candidates[1].date_difference_days).toBe(1);
     expect(candidates[2].date_difference_days).toBe(2);
+  });
+});
+
+describe('parseTypeFilter', () => {
+  it('accepts the two types the YNAB API supports', () => {
+    expect(parseTypeFilter('uncategorized')).toBe('uncategorized');
+    expect(parseTypeFilter('unapproved')).toBe('unapproved');
+  });
+
+  it('is case-insensitive', () => {
+    expect(parseTypeFilter('UNAPPROVED')).toBe('unapproved');
+  });
+
+  it('returns undefined when no type is given', () => {
+    expect(parseTypeFilter(undefined)).toBeUndefined();
+  });
+
+  it('rejects unknown types instead of passing them to the API', () => {
+    expect(() => parseTypeFilter('bogus')).toThrow("Invalid type 'bogus'");
   });
 });

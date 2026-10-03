@@ -91,6 +91,24 @@ export function parseStatusFilter(value: string): string[] {
   return statuses;
 }
 
+export type TransactionTypeFilter = 'uncategorized' | 'unapproved';
+
+export function parseTypeFilter(value?: string): TransactionTypeFilter | undefined {
+  if (value === undefined) return undefined;
+
+  const normalized = value.toLowerCase();
+  const validTypes = ['uncategorized', 'unapproved'];
+
+  if (!validTypes.includes(normalized)) {
+    throw new YnabCliError(
+      `Invalid type '${value}'. Must be one of: ${validTypes.join(', ')}`,
+      400
+    );
+  }
+
+  return normalized as TransactionTypeFilter;
+}
+
 export type TransactionLike = {
   date: string;
   amount: number;

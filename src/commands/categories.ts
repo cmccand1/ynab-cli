@@ -141,7 +141,7 @@ export function createCategoriesCommand(): Command {
     .argument('<id>', 'Category ID')
     .option('-b, --budget <id>', 'Budget ID')
     .option('--since <date>', 'Filter transactions since date')
-    .option('--type <type>', 'Filter by transaction type')
+    .option('--type <type>', 'Filter by transaction type: uncategorized or unapproved')
     .option('--last-knowledge <number>', 'Last knowledge of server', parseInt)
     .option(
       '--fields <fields>',

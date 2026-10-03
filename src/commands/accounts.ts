@@ -38,7 +38,7 @@ export function createAccountsCommand(): Command {
     .argument('<id>', 'Account ID')
     .option('-b, --budget <id>', 'Budget ID')
     .option('--since <date>', 'Filter transactions since date')
-    .option('--type <type>', 'Filter by transaction type')
+    .option('--type <type>', 'Filter by transaction type: uncategorized or unapproved')
     .option(
       '--fields <fields>',
       'Comma-separated list of fields to include (e.g., id,date,amount,memo)'

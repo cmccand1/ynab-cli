@@ -84,7 +84,7 @@ export function createTransactionsCommand(): Command {
     .option('--payee <id>', 'Filter by payee ID')
     .option('--since <date>', 'Filter transactions since date')
     .option('--until <date>', 'Filter transactions until date')
-    .option('--type <type>', 'Filter by transaction type')
+    .option('--type <type>', 'Filter by transaction type: uncategorized or unapproved')
     .option('--approved <value>', 'Filter by approval status: true or false')
     .option(
       '--status <statuses>',
@@ -473,7 +473,7 @@ export function createTransactionsCommand(): Command {
     .option('--payee <id>', 'Filter by payee ID')
     .option('--since <date>', 'Filter transactions since date')
     .option('--until <date>', 'Filter transactions until date')
-    .option('--type <type>', 'Filter by transaction type')
+    .option('--type <type>', 'Filter by transaction type: uncategorized or unapproved')
     .option('--approved <value>', 'Filter by approval status: true or false')
     .option(
       '--status <statuses>',
