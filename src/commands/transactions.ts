@@ -49,6 +49,7 @@ interface TransactionOptions {
   memo?: string;
   cleared?: string;
   approved?: boolean;
+  importId?: string;
 }
 
 function buildTransactionData(options: TransactionOptions): Record<string, unknown> {
@@ -57,6 +58,9 @@ function buildTransactionData(options: TransactionOptions): Record<string, unkno
   }
   if (options.amount === undefined) {
     throw new YnabCliError('--amount is required in non-interactive mode', 400);
+  }
+  if (options.importId !== undefined && (options.importId === '' || options.importId.length > 36)) {
+    throw new YnabCliError('--import-id must be between 1 and 36 characters', 400);
   }
 
   return {
@@ -69,6 +73,7 @@ function buildTransactionData(options: TransactionOptions): Record<string, unkno
     memo: options.memo,
     cleared: options.cleared,
     approved: options.approved,
+    import_id: options.importId,
   };
 }
 
@@ -169,6 +174,10 @@ export function createTransactionsCommand(): Command {
     .option('--memo <memo>', 'Memo')
     .option('--cleared <status>', 'Cleared status (cleared, uncleared, reconciled)')
     .option('--approved', 'Mark as approved')
+    .option(
+      '--import-id <id>',
+      'Unique ID for this transaction (max 36 chars). Creating again with the same ID on the same account is rejected, so retries are safe'
+    )
     .action(
       withErrorHandling(
         async (
@@ -183,6 +192,7 @@ export function createTransactionsCommand(): Command {
             memo?: string;
             cleared?: string;
             approved?: boolean;
+            importId?: string;
           } & CommandOptions
         ) => {
           const transactionData = buildTransactionData(options);
