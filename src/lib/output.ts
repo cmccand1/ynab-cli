@@ -16,3 +16,11 @@ export function outputJson(data: unknown, options: OutputOptions = {}): void {
 
   console.log(jsonString);
 }
+
+export function outputError(error: { name: string; detail: string; statusCode: number }): void {
+  const jsonString = globalOutputOptions.compact
+    ? JSON.stringify({ error })
+    : JSON.stringify({ error }, null, 2);
+
+  console.error(jsonString);
+}

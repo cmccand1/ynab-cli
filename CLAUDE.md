@@ -73,7 +73,7 @@ List commands return arrays directly (not wrapped in objects) for easy piping to
 
 ### Error Handling
 
-All API calls go through `YnabClient.withErrorHandling()` which catches errors and passes them to `handleYnabError()` in src/lib/errors.ts. Errors are output as JSON:
+All API calls go through `YnabClient.withErrorHandling()` which catches errors and passes them to `handleYnabError()` in src/lib/errors.ts. Errors, including Commander's own usage errors, are written to stderr as JSON with exit code 1 (stdout only ever holds results):
 ```json
 {
   "error": {

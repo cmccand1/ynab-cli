@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { Command } from 'commander';
-import { setOutputOptions } from './lib/output.js';
+import { outputError, setOutputOptions } from './lib/output.js';
 import { createAuthCommand } from './commands/auth.js';
 import { createUserCommand } from './commands/user.js';
 import { createBudgetsCommand } from './commands/budgets.js';
@@ -41,5 +41,21 @@ program.addCommand(createPayeesCommand());
 program.addCommand(createMonthsCommand());
 program.addCommand(createApiCommand());
 program.addCommand(createMcpCommand());
+
+// Report Commander's own usage errors (missing argument, unknown option,
+// invalid value) in the same JSON shape as every other error
+function useJsonErrors(command: Command): void {
+  command.configureOutput({
+    outputError: (message) =>
+      outputError({
+        name: 'cli_error',
+        detail: message.replace(/^error: /, '').trim(),
+        statusCode: 400,
+      }),
+  });
+  command.commands.forEach(useJsonErrors);
+}
+
+useJsonErrors(program);
 
 program.parse();

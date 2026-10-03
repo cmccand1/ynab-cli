@@ -1,5 +1,5 @@
 import type { YnabError } from '../types/index.js';
-import { outputJson } from './output.js';
+import { outputError } from './output.js';
 
 export class YnabCliError extends Error {
   constructor(
@@ -81,7 +81,7 @@ function enhanceRateLimitMessage(detail: string): string {
 function formatErrorResponse(name: string, detail: string, statusCode: number): never {
   const enhancedDetail = name === 'too_many_requests' ? enhanceRateLimitMessage(detail) : detail;
 
-  outputJson({ error: { name, detail: enhancedDetail, statusCode } });
+  outputError({ name, detail: enhancedDetail, statusCode });
   process.exit(1);
   throw new Error('process.exit returned unexpectedly');
 }
