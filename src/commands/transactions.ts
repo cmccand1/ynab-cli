@@ -12,7 +12,7 @@ import {
   type TransactionLike,
   type SummaryTransaction,
 } from '../lib/utils.js';
-import { withErrorHandling, requireConfirmation, buildUpdateObject } from '../lib/command-utils.js';
+import { withErrorHandling, requireConfirmation, buildUpdateObject, parseNumberOption, parseIntegerOption } from '../lib/command-utils.js';
 import { validateTransactionSplits, validateBatchUpdates } from '../lib/schemas.js';
 import { parseDate, todayDate } from '../lib/dates.js';
 import type { CommandOptions } from '../types/index.js';
@@ -90,14 +90,14 @@ export function createTransactionsCommand(): Command {
       '--status <statuses>',
       'Filter by cleared status: cleared, uncleared, reconciled (comma-separated for multiple)'
     )
-    .option('--min-amount <amount>', 'Minimum amount in currency units (e.g., 10.50)', parseFloat)
-    .option('--max-amount <amount>', 'Maximum amount in currency units (e.g., 100.00)', parseFloat)
+    .option('--min-amount <amount>', 'Minimum amount in currency units (e.g., 10.50)', parseNumberOption)
+    .option('--max-amount <amount>', 'Maximum amount in currency units (e.g., 100.00)', parseNumberOption)
     .option(
       '--fields <fields>',
       'Comma-separated list of fields to include (e.g., id,date,amount,memo)'
     )
-    .option('--last-knowledge <number>', 'Last server knowledge for delta requests. When used, output includes server_knowledge.', parseInt)
-    .option('--limit <number>', 'Maximum number of transactions to return', parseInt)
+    .option('--last-knowledge <number>', 'Last server knowledge for delta requests. When used, output includes server_knowledge.', parseIntegerOption)
+    .option('--limit <number>', 'Maximum number of transactions to return', parseIntegerOption)
     .action(
       withErrorHandling(
         async (
@@ -162,7 +162,7 @@ export function createTransactionsCommand(): Command {
     .option('-b, --budget <id>', 'Budget ID')
     .option('--account <id>', 'Account ID')
     .option('--date <date>', 'Transaction date')
-    .option('--amount <amount>', 'Amount in currency units (e.g., 10.50)', parseFloat)
+    .option('--amount <amount>', 'Amount in currency units (e.g., 10.50)', parseNumberOption)
     .option('--payee-name <name>', 'Payee name')
     .option('--payee-id <id>', 'Payee ID')
     .option('--category-id <id>', 'Category ID')
@@ -202,7 +202,7 @@ export function createTransactionsCommand(): Command {
     .option('-b, --budget <id>', 'Budget ID')
     .option('--account <id>', 'Account ID')
     .option('--date <date>', 'Transaction date')
-    .option('--amount <amount>', 'Amount in currency units', parseFloat)
+    .option('--amount <amount>', 'Amount in currency units', parseNumberOption)
     .option('--payee-name <name>', 'Payee name')
     .option('--payee-id <id>', 'Payee ID')
     .option('--category-id <id>', 'Category ID')
@@ -395,7 +395,7 @@ export function createTransactionsCommand(): Command {
     .option('-b, --budget <id>', 'Budget ID')
     .option('--memo <text>', 'Search in memo field')
     .option('--payee-name <name>', 'Search in payee name')
-    .option('--amount <amount>', 'Search for exact amount in currency units', parseFloat)
+    .option('--amount <amount>', 'Search for exact amount in currency units', parseNumberOption)
     .option('--since <date>', 'Search transactions since date')
     .option('--until <date>', 'Search transactions until date')
     .option('--approved <value>', 'Filter by approval status: true or false')
@@ -479,9 +479,9 @@ export function createTransactionsCommand(): Command {
       '--status <statuses>',
       'Filter by cleared status: cleared, uncleared, reconciled (comma-separated)'
     )
-    .option('--min-amount <amount>', 'Minimum amount in currency units', parseFloat)
-    .option('--max-amount <amount>', 'Maximum amount in currency units', parseFloat)
-    .option('--top <number>', 'Limit payee/category breakdowns to top N entries', parseInt)
+    .option('--min-amount <amount>', 'Minimum amount in currency units', parseNumberOption)
+    .option('--max-amount <amount>', 'Maximum amount in currency units', parseNumberOption)
+    .option('--top <number>', 'Limit payee/category breakdowns to top N entries', parseIntegerOption)
     .action(
       withErrorHandling(
         async (
@@ -525,7 +525,7 @@ export function createTransactionsCommand(): Command {
     .description('Find candidate transfer matches for a transaction across accounts')
     .argument('<id>', 'Transaction ID')
     .option('-b, --budget <id>', 'Budget ID')
-    .option('--days <number>', 'Maximum date difference in days (default: 3)', parseInt)
+    .option('--days <number>', 'Maximum date difference in days (default: 3)', parseIntegerOption)
     .option('--since <date>', 'Search transactions since date (defaults to source date minus --days)')
     .action(
       withErrorHandling(

@@ -3,7 +3,7 @@ import { client } from '../lib/api-client.js';
 import { outputJson } from '../lib/output.js';
 import { YnabCliError } from '../lib/errors.js';
 import { amountToMilliunits, applyFieldSelection } from '../lib/utils.js';
-import { withErrorHandling } from '../lib/command-utils.js';
+import { withErrorHandling, parseNumberOption, parseIntegerOption } from '../lib/command-utils.js';
 import { parseDate } from '../lib/dates.js';
 import type { CommandOptions } from '../types/index.js';
 
@@ -14,12 +14,19 @@ export function createCategoriesCommand(): Command {
     .command('list')
     .description('List all categories')
     .option('-b, --budget <id>', 'Budget ID')
-    .option('--last-knowledge <number>', 'Last knowledge of server', parseInt)
+    .option('--last-knowledge <number>', 'Last server knowledge for delta requests. When used, output includes server_knowledge.', parseIntegerOption)
     .action(
       withErrorHandling(
         async (options: { budget?: string; lastKnowledge?: number } & CommandOptions) => {
           const result = await client.getCategories(options.budget, options.lastKnowledge);
-          outputJson(result?.category_groups);
+          if (options.lastKnowledge !== undefined) {
+            outputJson({
+              category_groups: result?.category_groups,
+              server_knowledge: result?.server_knowledge,
+            });
+          } else {
+            outputJson(result?.category_groups);
+          }
         }
       )
     );
@@ -43,7 +50,7 @@ export function createCategoriesCommand(): Command {
     .option('--name <name>', 'New category name')
     .option('--note <note>', 'Category note (use empty string to clear)')
     .option('--category-group-id <id>', 'Move to a different category group')
-    .option('--goal-target <amount>', 'Goal target amount in dollars (ignored if category has no goal)', parseFloat)
+    .option('--goal-target <amount>', 'Goal target amount in dollars (ignored if category has no goal)', parseNumberOption)
     .option('-b, --budget <id>', 'Budget ID')
     .action(
       withErrorHandling(
@@ -107,7 +114,7 @@ export function createCategoriesCommand(): Command {
     .description('Set category budgeted amount for a month (overrides existing amount)')
     .argument('<id>', 'Category ID')
     .requiredOption('--month <month>', 'Budget month (e.g., 2025-07-01)')
-    .requiredOption('--amount <amount>', 'Total budgeted amount to set (e.g., 100.50)', parseFloat)
+    .requiredOption('--amount <amount>', 'Total budgeted amount to set (e.g., 100.50)', parseNumberOption)
     .option('-b, --budget <id>', 'Budget ID')
     .action(
       withErrorHandling(
@@ -119,10 +126,6 @@ export function createCategoriesCommand(): Command {
             budget?: string;
           } & CommandOptions
         ) => {
-          if (isNaN(options.amount)) {
-            throw new YnabCliError('Amount must be a valid number', 400);
-          }
-
           const milliunits = amountToMilliunits(options.amount);
           const category = await client.updateMonthCategory(
             parseDate(options.month),
@@ -142,7 +145,7 @@ export function createCategoriesCommand(): Command {
     .option('-b, --budget <id>', 'Budget ID')
     .option('--since <date>', 'Filter transactions since date')
     .option('--type <type>', 'Filter by transaction type: uncategorized or unapproved')
-    .option('--last-knowledge <number>', 'Last knowledge of server', parseInt)
+    .option('--last-knowledge <number>', 'Last server knowledge for delta requests. When used, output includes server_knowledge.', parseIntegerOption)
     .option(
       '--fields <fields>',
       'Comma-separated list of fields to include (e.g., id,date,amount,memo)'
@@ -165,8 +168,13 @@ export function createCategoriesCommand(): Command {
             type: options.type,
             lastKnowledgeOfServer: options.lastKnowledge,
           });
-          const transactions = result?.transactions || [];
-          outputJson(applyFieldSelection(transactions, options.fields));
+          const transactions = applyFieldSelection(result?.transactions || [], options.fields);
+
+          if (options.lastKnowledge !== undefined) {
+            outputJson({ transactions, server_knowledge: result?.server_knowledge });
+          } else {
+            outputJson(transactions);
+          }
         }
       )
     );

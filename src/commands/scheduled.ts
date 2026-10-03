@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { client } from '../lib/api-client.js';
 import { outputJson } from '../lib/output.js';
-import { withErrorHandling, requireConfirmation } from '../lib/command-utils.js';
+import { withErrorHandling, requireConfirmation, parseIntegerOption } from '../lib/command-utils.js';
 import type { CommandOptions } from '../types/index.js';
 
 export function createScheduledCommand(): Command {
@@ -11,7 +11,7 @@ export function createScheduledCommand(): Command {
     .command('list')
     .description('List all scheduled transactions')
     .option('-b, --budget <id>', 'Budget ID')
-    .option('--last-knowledge <number>', 'Last knowledge of server', parseInt)
+    .option('--last-knowledge <number>', 'Last server knowledge for delta requests. When used, output includes server_knowledge.', parseIntegerOption)
     .action(
       withErrorHandling(
         async (options: { budget?: string; lastKnowledge?: number } & CommandOptions) => {
@@ -19,7 +19,14 @@ export function createScheduledCommand(): Command {
             options.budget,
             options.lastKnowledge
           );
-          outputJson(result?.scheduled_transactions);
+          if (options.lastKnowledge !== undefined) {
+            outputJson({
+              scheduled_transactions: result?.scheduled_transactions,
+              server_knowledge: result?.server_knowledge,
+            });
+          } else {
+            outputJson(result?.scheduled_transactions);
+          }
         }
       )
     );

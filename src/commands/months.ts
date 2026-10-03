@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { client } from '../lib/api-client.js';
 import { outputJson } from '../lib/output.js';
-import { withErrorHandling } from '../lib/command-utils.js';
+import { withErrorHandling, parseIntegerOption } from '../lib/command-utils.js';
 import { parseDate } from '../lib/dates.js';
 import type { CommandOptions } from '../types/index.js';
 
@@ -12,12 +12,16 @@ export function createMonthsCommand(): Command {
     .command('list')
     .description('List all budget months')
     .option('-b, --budget <id>', 'Budget ID')
-    .option('--last-knowledge <number>', 'Last knowledge of server', parseInt)
+    .option('--last-knowledge <number>', 'Last server knowledge for delta requests. When used, output includes server_knowledge.', parseIntegerOption)
     .action(
       withErrorHandling(
         async (options: { budget?: string; lastKnowledge?: number } & CommandOptions) => {
           const result = await client.getBudgetMonths(options.budget, options.lastKnowledge);
-          outputJson(result?.months);
+          if (options.lastKnowledge !== undefined) {
+            outputJson({ months: result?.months, server_knowledge: result?.server_knowledge });
+          } else {
+            outputJson(result?.months);
+          }
         }
       )
     );

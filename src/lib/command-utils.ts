@@ -1,4 +1,21 @@
+import { InvalidArgumentError } from 'commander';
 import { handleYnabError, YnabCliError } from './errors.js';
+
+export function parseNumberOption(value: string): number {
+  const parsed = Number(value);
+  if (value.trim() === '' || !Number.isFinite(parsed)) {
+    throw new InvalidArgumentError('Must be a number.');
+  }
+  return parsed;
+}
+
+export function parseIntegerOption(value: string): number {
+  const parsed = parseNumberOption(value);
+  if (!Number.isInteger(parsed)) {
+    throw new InvalidArgumentError('Must be a whole number.');
+  }
+  return parsed;
+}
 
 export function withErrorHandling<TArgs extends unknown[], R>(
   fn: (...args: TArgs) => Promise<R>
