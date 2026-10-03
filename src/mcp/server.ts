@@ -238,9 +238,10 @@ tool(
     memo: z.string().optional().describe('Transaction memo'),
     cleared: z.enum(['cleared', 'uncleared', 'reconciled']).optional().describe('Cleared status'),
     approved: z.boolean().optional().describe('Whether the transaction is approved'),
+    importId: z.string().min(1).max(36).optional().describe('Unique ID for this transaction (max 36 chars). Creating again with the same ID on the same account is rejected, so retries are safe'),
     budgetId: z.string().optional().describe('Budget ID (uses default if not specified)'),
   },
-  async ({ accountId, date, amount, payeeName, payeeId, categoryId, memo, cleared, approved, budgetId }) => {
+  async ({ accountId, date, amount, payeeName, payeeId, categoryId, memo, cleared, approved, importId, budgetId }) => {
     const transaction: Record<string, unknown> = {
       account_id: accountId,
       date,
@@ -252,6 +253,7 @@ tool(
     if (memo !== undefined) transaction.memo = memo;
     if (cleared !== undefined) transaction.cleared = cleared;
     if (approved !== undefined) transaction.approved = approved;
+    if (importId !== undefined) transaction.import_id = importId;
     return currencyResponse(await client.createTransaction({ transaction }, budgetId));
   }
 );

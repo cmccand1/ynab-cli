@@ -2,15 +2,9 @@
 
 Open items from a 2026-10-03 review of this CLI against the `cli-for-agents` checklist (how well a CLI works for coding agents and scripts). Ordered by expected impact. Nothing here is committed work.
 
-Already done from the same review: `--import-id` on `transactions create`, strict numeric option parsing, all errors as JSON on stderr (including Commander's usage errors), and `server_knowledge` in the output of every list command that takes `--last-knowledge`.
+Already done from the same review: an import ID on `transactions create` and the MCP `create_transaction` tool (a repeat returns a 409 `conflict`, confirmed live), strict numeric option parsing, all errors as JSON on stderr (including Commander's usage errors), and `server_knowledge` in the output of every list command that takes `--last-knowledge`.
 
 ## High impact
-
-### Make the MCP `create_transaction` tool safe to retry
-
-The CLI's `transactions create` now takes `--import-id`, which YNAB uses to reject a repeat of the same transaction. The MCP `create_transaction` tool (`src/mcp/server.ts`) has no `import_id` parameter, so a retry through MCP still creates a duplicate.
-
-How YNAB responds to a repeated `import_id` on a single create (error vs. silent skip) has not been tested against the live API; confirm it and document the behaviour in the `--import-id` help.
 
 ### Add `--dry-run` to write commands
 
