@@ -25,11 +25,14 @@ export function createMonthsCommand(): Command {
   cmd
     .command('view')
     .description('View specific month details')
-    .argument('<month>', 'Budget month (e.g., 2025-07-01)')
+    .argument('<month>', 'Budget month (e.g., 2025-07-01, or "current")')
     .option('-b, --budget <id>', 'Budget ID')
     .action(
       withErrorHandling(async (month: string, options: CommandOptions) => {
-        const monthData = await client.getBudgetMonth(parseDate(month), options.budget);
+        const monthData = await client.getBudgetMonth(
+          month === 'current' ? month : parseDate(month),
+          options.budget
+        );
         outputJson(monthData);
       })
     );
