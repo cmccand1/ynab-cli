@@ -11,6 +11,7 @@ vi.mock('../lib/api-client.js', () => ({
     createTransaction: vi.fn(),
     getCategories: vi.fn(),
     createCategory: vi.fn(),
+    createCategoryGroup: vi.fn(),
     getScheduledTransaction: vi.fn(),
     updateScheduledTransaction: vi.fn(),
     deleteScheduledTransaction: vi.fn(),
@@ -222,5 +223,41 @@ describe('import IDs on bank-linked accounts', () => {
     ]);
     await expectCliError(() => run('batch-create', '--transactions', batch), 400);
     expect(mock.createTransactions).not.toHaveBeenCalled();
+  });
+});
+
+describe('ynab categories create-group', () => {
+  const run = (...args: string[]) =>
+    createCategoriesCommand().parseAsync(['node', 'categories', 'create-group', ...args]);
+
+  beforeEach(() => {
+    mock.getCategories.mockResolvedValue({
+      category_groups: [
+        { id: 'g1', name: 'Pets', deleted: false, categories: [] },
+        { id: 'g2', name: 'Old', deleted: true, categories: [] },
+      ],
+    });
+  });
+
+  it('creates a group with the trimmed name', async () => {
+    mock.createCategoryGroup.mockResolvedValue({ id: 'g3', name: 'Streaming' });
+    await run('--name', '  Streaming ');
+    expect(mock.createCategoryGroup).toHaveBeenCalledWith({ category_group: { name: 'Streaming' } }, undefined);
+    expect(out).toHaveBeenCalledWith({ id: 'g3', name: 'Streaming' });
+  });
+
+  it('refuses a duplicate name', async () => {
+    await expectCliError(() => run('--name', 'Pets'), 409);
+    expect(mock.createCategoryGroup).not.toHaveBeenCalled();
+  });
+
+  it('allows the name of a deleted group', async () => {
+    await run('--name', 'Old');
+    expect(mock.createCategoryGroup).toHaveBeenCalled();
+  });
+
+  it('refuses a blank name without calling the API', async () => {
+    await expectCliError(() => run('--name', '   '), 400);
+    expect(mock.getCategories).not.toHaveBeenCalled();
   });
 });

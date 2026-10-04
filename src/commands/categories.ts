@@ -90,6 +90,31 @@ export function createCategoriesCommand(): Command {
     );
 
   cmd
+    .command('create-group')
+    .description(
+      'Create a category group. Fails if a group with the same name already exists. ' +
+        'Add categories to it with "ynab categories create --group <name>".\n\n' +
+        'Example:\n  ynab categories create-group --name "Pets"'
+    )
+    .requiredOption('--name <name>', 'Category group name')
+    .option('-b, --budget <id>', 'Budget ID')
+    .action(
+      withErrorHandling(async (options: { name: string } & CommandOptions) => {
+        const name = options.name.trim();
+        if (name === '') {
+          throw new YnabCliError('Category group name cannot be empty or whitespace', 400);
+        }
+        const { category_groups } = await client.getCategories(options.budget);
+        const existing = category_groups.find((g) => !g.deleted && g.name === name);
+        if (existing) {
+          throw new YnabCliError(`Category group "${existing.name}" already exists (id ${existing.id})`, 409);
+        }
+        const group = await client.createCategoryGroup({ category_group: { name } }, options.budget);
+        outputJson(group);
+      })
+    );
+
+  cmd
     .command('update')
     .description('Update category details')
     .argument('<id>', 'Category ID')

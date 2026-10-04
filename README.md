@@ -67,6 +67,7 @@ ynab accounts reconcile <id> --balance -2965.38 [--adjust]
 ynab categories list
 ynab categories view <id>
 ynab categories create --name "Claude - 13th" --group "Subscriptions (Monthly)" [--note <note>]
+ynab categories create-group --name "Pets"
 ynab categories update <id> [--name <name>] [--note <note>] [--category-group-id <id>] [--goal-target <amount>]
 ynab categories budget <id> --month <YYYY-MM> --amount <amount>
 ynab categories transactions <id>

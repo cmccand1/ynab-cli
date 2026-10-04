@@ -186,6 +186,13 @@ export class YnabClient {
     return response.data.category;
   }
 
+  async createCategoryGroup(data: ynab.PostCategoryGroupWrapper, budgetId?: string) {
+    const api = await this.getApi();
+    const id = await this.getBudgetId(budgetId);
+    const response = await api.categories.createCategoryGroup(id, data);
+    return response.data.category_group;
+  }
+
   async updateCategory(categoryId: string, data: ynab.PatchCategoryWrapper, budgetId?: string) {
     const api = await this.getApi();
     const id = await this.getBudgetId(budgetId);
