@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../lib/api-client.js', () => ({
-  client: { createTransaction: vi.fn(), createTransactions: vi.fn() },
+  client: {
+    createTransaction: vi.fn(),
+    createTransactions: vi.fn(),
+    getAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
+  },
 }));
 
 vi.mock('../lib/output.js', () => ({

@@ -98,6 +98,8 @@ ynab transactions approve --since 2026-09-01 --dry-run
 ynab transactions approve --all
 ```
 
+`import_id` makes a create safe to retry: YNAB rejects a second transaction with the same import ID on the same account. Don't use it on a bank-linked account: YNAB never merges the feed's copy of a transaction into one that has an import ID, so the transaction would appear twice. `create` and `batch-create` refuse an import ID on a linked account unless you pass `--allow-linked-import-id`; without one, the feed's copy merges into your transaction when it arrives.
+
 ### Payees
 
 ```bash

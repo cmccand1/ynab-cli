@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../lib/api-client.js', () => ({
   client: {
     getAccount: vi.fn(),
+    getAccounts: vi.fn(),
+    createTransactions: vi.fn(),
     getTransactionsByAccount: vi.fn(),
     getTransactions: vi.fn(),
     updateTransactions: vi.fn(),
@@ -176,5 +178,49 @@ describe('ynab scheduled', () => {
     expect(mock.updateScheduledTransaction.mock.invocationCallOrder[0]).toBeLessThan(
       mock.deleteScheduledTransaction.mock.invocationCallOrder[0]
     );
+  });
+});
+
+describe('import IDs on bank-linked accounts', () => {
+  const run = (...args: string[]) =>
+    createTransactionsCommand().parseAsync(['node', 'transactions', ...args]);
+
+  beforeEach(() => {
+    mock.getAccounts.mockResolvedValue({
+      accounts: [
+        { id: 'linked', name: 'Venmo', direct_import_linked: true },
+        { id: 'manual', name: 'Cash', direct_import_linked: false },
+      ],
+    });
+  });
+
+  it('refuses an import ID on a linked account and writes nothing', async () => {
+    await expectCliError(() => run('create', '--account', 'linked', '--amount', '5', '--import-id', 'venmo:1'), 400);
+    expect(mock.createTransaction).not.toHaveBeenCalled();
+  });
+
+  it('allows it with --allow-linked-import-id', async () => {
+    await run('create', '--account', 'linked', '--amount', '5', '--import-id', 'venmo:1', '--allow-linked-import-id');
+    expect(mock.createTransaction).toHaveBeenCalled();
+  });
+
+  it('allows an import ID on an unlinked account', async () => {
+    await run('create', '--account', 'manual', '--amount', '5', '--import-id', 'cash:1');
+    expect(mock.createTransaction).toHaveBeenCalled();
+  });
+
+  it('skips the account lookup when there is no import ID', async () => {
+    await run('create', '--account', 'linked', '--amount', '5');
+    expect(mock.getAccounts).not.toHaveBeenCalled();
+    expect(mock.createTransaction).toHaveBeenCalled();
+  });
+
+  it('refuses a batch with any import ID on a linked account', async () => {
+    const batch = JSON.stringify([
+      { account_id: 'manual', date: '2026-10-01', amount: -1, import_id: 'a' },
+      { account_id: 'linked', date: '2026-10-01', amount: -1, import_id: 'b' },
+    ]);
+    await expectCliError(() => run('batch-create', '--transactions', batch), 400);
+    expect(mock.createTransactions).not.toHaveBeenCalled();
   });
 });

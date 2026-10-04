@@ -4,6 +4,7 @@ import { z } from 'zod/v3';
 import { client } from '../lib/api-client.js';
 import { YnabCliError, sanitizeApiError, sanitizeErrorMessage } from '../lib/errors.js';
 import { amountToMilliunits, applyFieldSelection, applyTransactionFilters, convertMilliunitsToAmounts, summarizeTransactions, findTransferCandidates, type SummaryTransaction, type TransactionLike } from '../lib/utils.js';
+import { assertNoImportIdsOnLinkedAccounts } from '../lib/import-guard.js';
 
 const toolRegistry = [
   { name: 'list_budgets', description: 'List all budgets in the YNAB account' },
@@ -238,10 +239,11 @@ tool(
     memo: z.string().optional().describe('Transaction memo'),
     cleared: z.enum(['cleared', 'uncleared', 'reconciled']).optional().describe('Cleared status'),
     approved: z.boolean().optional().describe('Whether the transaction is approved'),
-    importId: z.string().min(1).max(36).optional().describe('Unique ID for this transaction (max 36 chars). Creating again with the same ID on the same account is rejected, so retries are safe'),
+    importId: z.string().min(1).max(36).optional().describe('Unique ID for this transaction (max 36 chars). Creating again with the same ID on the same account is rejected, so retries are safe. Refused on bank-linked accounts unless allowLinkedImportId is true'),
+    allowLinkedImportId: z.boolean().optional().describe("Allow importId on a bank-linked account. The feed's copy will then be added as a duplicate instead of merging"),
     budgetId: z.string().optional().describe('Budget ID (uses default if not specified)'),
   },
-  async ({ accountId, date, amount, payeeName, payeeId, categoryId, memo, cleared, approved, importId, budgetId }) => {
+  async ({ accountId, date, amount, payeeName, payeeId, categoryId, memo, cleared, approved, importId, allowLinkedImportId, budgetId }) => {
     const transaction: Record<string, unknown> = {
       account_id: accountId,
       date,
@@ -254,6 +256,7 @@ tool(
     if (cleared !== undefined) transaction.cleared = cleared;
     if (approved !== undefined) transaction.approved = approved;
     if (importId !== undefined) transaction.import_id = importId;
+    if (!allowLinkedImportId) await assertNoImportIdsOnLinkedAccounts([transaction], budgetId);
     return currencyResponse(await client.createTransaction({ transaction }, budgetId));
   }
 );

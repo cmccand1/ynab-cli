@@ -14,6 +14,7 @@ import {
 } from '../lib/utils.js';
 import { withErrorHandling, requireConfirmation, buildUpdateObject, parseNumberOption, parseIntegerOption } from '../lib/command-utils.js';
 import { validateTransactionSplits, validateBatchUpdates, validateBatchCreates } from '../lib/schemas.js';
+import { assertNoImportIdsOnLinkedAccounts } from '../lib/import-guard.js';
 import { parseDate, todayDate } from '../lib/dates.js';
 import type { CommandOptions } from '../types/index.js';
 
@@ -176,7 +177,11 @@ export function createTransactionsCommand(): Command {
     .option('--approved', 'Mark as approved')
     .option(
       '--import-id <id>',
-      'Unique ID for this transaction (max 36 chars). Creating again with the same ID on the same account is rejected, so retries are safe'
+      'Unique ID for this transaction (max 36 chars). Creating again with the same ID on the same account is rejected, so retries are safe. Refused on bank-linked accounts (see --allow-linked-import-id)'
+    )
+    .option(
+      '--allow-linked-import-id',
+      "Allow --import-id on a bank-linked account. The feed's copy of this transaction will then be added as a duplicate instead of merging"
     )
     .action(
       withErrorHandling(
@@ -193,9 +198,13 @@ export function createTransactionsCommand(): Command {
             cleared?: string;
             approved?: boolean;
             importId?: string;
+            allowLinkedImportId?: boolean;
           } & CommandOptions
         ) => {
           const transactionData = buildTransactionData(options);
+          if (!options.allowLinkedImportId) {
+            await assertNoImportIdsOnLinkedAccounts([transactionData], options.budget);
+          }
           const transaction = await client.createTransaction(
             { transaction: transactionData },
             options.budget
@@ -406,11 +415,15 @@ export function createTransactionsCommand(): Command {
     )
     .requiredOption(
       '--transactions <json>',
-      'JSON array of new transactions. Each needs "account_id", "date" and "amount"; pass "import_id" to make retries safe. Example: [{"account_id": "acc1", "date": "2026-10-01", "amount": -27.00, "payee_name": "Cafe", "import_id": "venmo:123"}]'
+      'JSON array of new transactions. Each needs "account_id", "date" and "amount"; pass "import_id" to make retries safe (refused on bank-linked accounts unless --allow-linked-import-id). Example: [{"account_id": "acc1", "date": "2026-10-01", "amount": -27.00, "payee_name": "Cafe", "import_id": "venmo:123"}]'
+    )
+    .option(
+      '--allow-linked-import-id',
+      "Allow import_id on bank-linked accounts. The feed's copies of those transactions will then be added as duplicates instead of merging"
     )
     .option('-b, --budget <id>', 'Budget ID')
     .action(
-      withErrorHandling(async (options: { transactions: string; budget?: string } & CommandOptions) => {
+      withErrorHandling(async (options: { transactions: string; allowLinkedImportId?: boolean; budget?: string } & CommandOptions) => {
         let parsed;
         try {
           parsed = JSON.parse(options.transactions);
@@ -419,6 +432,9 @@ export function createTransactionsCommand(): Command {
         }
 
         const creates = validateBatchCreates(parsed);
+        if (!options.allowLinkedImportId) {
+          await assertNoImportIdsOnLinkedAccounts(creates, options.budget);
+        }
 
         const transactionsInMilliunits = creates.map((transaction) => ({
           ...transaction,
