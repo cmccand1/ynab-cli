@@ -178,12 +178,33 @@ export function createScheduledCommand(): Command {
       withErrorHandling(
         async (id: string, options: { budget?: string; yes?: boolean } & CommandOptions) => {
           requireConfirmation('scheduled transaction', options.yes);
+          // YNAB silently keeps schedules whose first date is in the past (one that has
+          // already produced occurrences). Resetting date_first to the next date first
+          // makes the delete stick.
+          const existing = await client.getScheduledTransaction(id, options.budget);
+          if (!existing.deleted && existing.date_first !== existing.date_next) {
+            await client.updateScheduledTransaction(
+              id,
+              {
+                scheduled_transaction: {
+                  account_id: existing.account_id,
+                  date: existing.date_next,
+                  amount: existing.amount,
+                  frequency: existing.frequency,
+                  payee_id: existing.payee_id,
+                  category_id: existing.category_id,
+                  memo: existing.memo,
+                  flag_color: existing.flag_color as never,
+                },
+              },
+              options.budget
+            );
+          }
           const scheduledTransaction = await client.deleteScheduledTransaction(id, options.budget);
           const after = await client.getScheduledTransaction(id, options.budget).catch(() => null);
           if (after && !after.deleted) {
             throw new YnabCliError(
-              'YNAB accepted the delete but the schedule still exists. This happens when a YNAB app ' +
-                'syncs it back; delete it in the YNAB app instead.',
+              'YNAB accepted the delete but the schedule still exists. Delete it in the YNAB app instead.',
               409
             );
           }

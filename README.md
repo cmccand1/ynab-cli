@@ -150,7 +150,7 @@ All commands return JSON. Use `--compact` for minified output.
 
 The YNAB API does not support updating accounts. Use the web or mobile app for this.
 
-The API cannot unlink a matched transaction pair, or set an account's last-reconciled date; use the app for those. Some scheduled transactions also refuse API deletion (YNAB accepts the request but keeps the schedule); `ynab scheduled delete` detects this and reports an error.
+The API cannot unlink a matched transaction pair, or set an account's last-reconciled date; use the app for those. YNAB's API silently keeps a scheduled transaction whose first date is in the past: the DELETE returns `deleted: true`, but the schedule is restored within seconds. `ynab scheduled delete` works around this by resetting the first date to the next date before deleting, then verifies the schedule is gone.
 
 The API supports creating payees and category groups. Use raw API access for these:
 

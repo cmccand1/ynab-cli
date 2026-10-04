@@ -161,4 +161,20 @@ describe('ynab scheduled', () => {
     mock.getScheduledTransaction.mockResolvedValue({ id: 's1', deleted: false });
     await expectCliError(() => run('delete', 's1', '--yes'), 409);
   });
+
+  it('delete resets an old first date before deleting, so YNAB does not keep the schedule', async () => {
+    mock.getScheduledTransaction
+      .mockResolvedValueOnce({
+        id: 's1', deleted: false, account_id: 'acct', date_first: '2025-05-15', date_next: '2026-10-15',
+        amount: -21720, frequency: 'monthly', payee_id: 'p', category_id: 'c', memo: null, flag_color: null,
+      })
+      .mockResolvedValueOnce({ id: 's1', deleted: true });
+    mock.deleteScheduledTransaction.mockResolvedValue({ id: 's1' });
+    await run('delete', 's1', '--yes');
+    const [, body] = mock.updateScheduledTransaction.mock.calls[0];
+    expect(body.scheduled_transaction.date).toBe('2026-10-15');
+    expect(mock.updateScheduledTransaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mock.deleteScheduledTransaction.mock.invocationCallOrder[0]
+    );
+  });
 });
