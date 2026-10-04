@@ -38,6 +38,10 @@ Add `--limit` and `--fields` to all list commands (only transaction lists have t
 
 ## Lower impact
 
+### No command to create category groups
+
+`categories create` needs an existing group. New groups need `ynab api POST "/plans/{plan_id}/category_groups" --data '{"category_group":{"name":"Pets"}}'`. A `categories create-group --name` (or `--group` creating a missing group with a flag) would close the gap.
+
 ### Filter out hidden and deleted categories
 
 `categories list` returns hidden (retired) and deleted categories alongside live ones, so callers must filter with `jq` to avoid proposing a retired category. A flag such as `--active` would make the safe default one word.
