@@ -2,6 +2,8 @@
 
 Open items from a 2026-10-03 review of this CLI against the `cli-for-agents` checklist (how well a CLI works for coding agents and scripts). Ordered by expected impact. Nothing here is committed work.
 
+Since done: `accounts reconcile`, `transactions approve`, `categories create`, `scheduled create`/`update`, and a `scheduled delete` that verifies the delete stuck (2026-10-04).
+
 Already done from the same review: an import ID on `transactions create` and the MCP `create_transaction` tool (a repeat returns a 409 `conflict`, confirmed live), strict numeric option parsing, all errors as JSON on stderr (including Commander's usage errors), and `server_knowledge` in the output of every list command that takes `--last-knowledge`.
 
 ## High impact

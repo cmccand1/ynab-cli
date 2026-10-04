@@ -435,6 +435,84 @@ export function createTransactionsCommand(): Command {
     );
 
   cmd
+    .command('approve')
+    .description(
+      'Approve unapproved transactions in bulk. Select them by ID, by --account/--since/--until, ' +
+        'or pass --all for every unapproved transaction.\n\n' +
+        'Examples:\n' +
+        '  ynab transactions approve --since 2026-09-01 --dry-run\n' +
+        '  ynab transactions approve --account <id> --until 2026-09-30\n' +
+        '  ynab transactions approve <id1> <id2>'
+    )
+    .argument('[ids...]', 'Transaction IDs to approve (overrides the filters)')
+    .option('-b, --budget <id>', 'Budget ID')
+    .option('--account <id>', 'Only this account')
+    .option('--since <date>', 'Only transactions on or after this date')
+    .option('--until <date>', 'Only transactions on or before this date')
+    .option('--all', 'Approve every unapproved transaction (required when no IDs or filters are given)')
+    .option('--dry-run', 'Report what would be approved without writing anything')
+    .action(
+      withErrorHandling(
+        async (
+          ids: string[],
+          options: {
+            budget?: string;
+            account?: string;
+            since?: string;
+            until?: string;
+            all?: boolean;
+            dryRun?: boolean;
+          } & CommandOptions
+        ) => {
+          let selected: { id: string; date: string; amount: number; payee_name?: string | null; account_name?: string }[];
+
+          if (ids.length > 0) {
+            selected = ids.map((id) => ({ id, date: '', amount: 0 }));
+          } else {
+            if (!options.account && !options.since && !options.until && !options.all) {
+              throw new YnabCliError(
+                'Choose what to approve: transaction IDs, --account/--since/--until, or --all',
+                400
+              );
+            }
+            const result = await fetchTransactions({
+              budget: options.budget,
+              account: options.account,
+              since: options.since,
+              type: 'unapproved',
+            });
+            const until = options.until ? parseDate(options.until) : undefined;
+            selected = (result?.transactions || []).filter(
+              (t) => !t.deleted && !t.approved && (!until || t.date <= until)
+            );
+          }
+
+          if (options.dryRun) {
+            outputJson({
+              would_approve: selected.length,
+              sample: selected.slice(0, 10),
+              dry_run: true,
+            });
+            return;
+          }
+
+          for (let i = 0; i < selected.length; i += 500) {
+            await client.updateTransactions(
+              {
+                transactions: selected
+                  .slice(i, i + 500)
+                  .map((t) => ({ id: t.id, approved: true })),
+              },
+              options.budget
+            );
+          }
+
+          outputJson({ approved: selected.length });
+        }
+      )
+    );
+
+  cmd
     .command('search')
     .description('Search transactions')
     .option('-b, --budget <id>', 'Budget ID')

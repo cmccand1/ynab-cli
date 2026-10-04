@@ -179,6 +179,13 @@ export class YnabClient {
     return response.data.category;
   }
 
+  async createCategory(data: ynab.PostCategoryWrapper, budgetId?: string) {
+    const api = await this.getApi();
+    const id = await this.getBudgetId(budgetId);
+    const response = await api.categories.createCategory(id, data);
+    return response.data.category;
+  }
+
   async updateCategory(categoryId: string, data: ynab.PatchCategoryWrapper, budgetId?: string) {
     const api = await this.getApi();
     const id = await this.getBudgetId(budgetId);
@@ -424,6 +431,28 @@ export class YnabClient {
     const response = await api.scheduledTransactions.deleteScheduledTransaction(
       id,
       scheduledTransactionId
+    );
+    return response.data.scheduled_transaction;
+  }
+
+  async createScheduledTransaction(data: ynab.PostScheduledTransactionWrapper, budgetId?: string) {
+    const api = await this.getApi();
+    const id = await this.getBudgetId(budgetId);
+    const response = await api.scheduledTransactions.createScheduledTransaction(id, data);
+    return response.data.scheduled_transaction;
+  }
+
+  async updateScheduledTransaction(
+    scheduledTransactionId: string,
+    data: ynab.PutScheduledTransactionWrapper,
+    budgetId?: string
+  ) {
+    const api = await this.getApi();
+    const id = await this.getBudgetId(budgetId);
+    const response = await api.scheduledTransactions.updateScheduledTransaction(
+      id,
+      scheduledTransactionId,
+      data
     );
     return response.data.scheduled_transaction;
   }

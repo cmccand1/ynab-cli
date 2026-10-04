@@ -55,6 +55,10 @@ ynab budgets set-default <id>
 ynab accounts list
 ynab accounts view <id>
 ynab accounts transactions <id>
+
+# Reconcile against the bank's real balance: verifies the cleared balance, then marks cleared rows reconciled
+ynab accounts reconcile <id> --balance 1144.79 --dry-run
+ynab accounts reconcile <id> --balance -2965.38 [--adjust]
 ```
 
 ### Categories
@@ -62,6 +66,7 @@ ynab accounts transactions <id>
 ```bash
 ynab categories list
 ynab categories view <id>
+ynab categories create --name "Claude - 13th" --group "Subscriptions (Monthly)" [--note <note>]
 ynab categories update <id> [--name <name>] [--note <note>] [--category-group-id <id>] [--goal-target <amount>]
 ynab categories budget <id> --month <YYYY-MM> --amount <amount>
 ynab categories transactions <id>
@@ -85,6 +90,12 @@ ynab transactions create --account <id> --amount <amount> --date <YYYY-MM-DD>
 ynab transactions update <id> --amount <amount>
 ynab transactions delete <id>
 ynab transactions split <id> --splits '[{"amount": -50.00, "category_id": "xxx"}]'
+
+# Bulk
+ynab transactions batch-create --transactions '[{"account_id": "xxx", "date": "2026-10-01", "amount": -27.00, "import_id": "venmo:123"}]'
+ynab transactions batch-update --transactions '[{"id": "xxx", "approved": true}]'
+ynab transactions approve --since 2026-09-01 --dry-run
+ynab transactions approve --all
 ```
 
 ### Payees
@@ -109,7 +120,9 @@ ynab months view <YYYY-MM>
 ```bash
 ynab scheduled list
 ynab scheduled view <id>
-ynab scheduled delete <id>
+ynab scheduled create --account <id> --date <YYYY-MM-DD> --amount -21.48 --frequency monthly --payee-name "Google"
+ynab scheduled update <id> --amount -29.00 --date 2026-10-10
+ynab scheduled delete <id> --yes
 ```
 
 ### Raw API Access
@@ -137,7 +150,9 @@ All commands return JSON. Use `--compact` for minified output.
 
 The YNAB API does not support updating accounts. Use the web or mobile app for this.
 
-The API supports creating payees, categories, and category groups. Use raw API access for these:
+The API cannot unlink a matched transaction pair, or set an account's last-reconciled date; use the app for those. Some scheduled transactions also refuse API deletion (YNAB accepts the request but keeps the schedule); `ynab scheduled delete` detects this and reports an error.
+
+The API supports creating payees and category groups. Use raw API access for these:
 
 ```bash
 ynab api POST /plans/{plan_id}/payees --data '{"payee": {"name": "Coffee Shop"}}'

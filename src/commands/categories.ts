@@ -44,6 +44,52 @@ export function createCategoriesCommand(): Command {
     );
 
   cmd
+    .command('create')
+    .description(
+      'Create a category in an existing group. Fails if a category with the same name already exists ' +
+        'in that group.\n\n' +
+        'Example:\n  ynab categories create --name "Claude - 13th" --group "Subscriptions (Monthly)" --note "Claude Pro, Apple Card"'
+    )
+    .requiredOption('--name <name>', 'Category name')
+    .requiredOption('--group <name-or-id>', 'Category group name or ID')
+    .option('--note <note>', 'Category note')
+    .option('-b, --budget <id>', 'Budget ID')
+    .action(
+      withErrorHandling(
+        async (options: { name: string; group: string; note?: string } & CommandOptions) => {
+          const { category_groups } = await client.getCategories(options.budget);
+          const group = category_groups.find(
+            (g) => !g.deleted && (g.id === options.group || g.name === options.group)
+          );
+          if (!group) {
+            throw new YnabCliError(
+              `Category group "${options.group}" not found. Run "ynab categories list" for names.`,
+              404
+            );
+          }
+          const existing = group.categories.find((c) => !c.deleted && c.name === options.name.trim());
+          if (existing) {
+            throw new YnabCliError(
+              `Category "${existing.name}" already exists in "${group.name}" (id ${existing.id})`,
+              409
+            );
+          }
+          const category = await client.createCategory(
+            {
+              category: {
+                name: options.name.trim(),
+                category_group_id: group.id,
+                ...(options.note !== undefined ? { note: options.note } : {}),
+              },
+            },
+            options.budget
+          );
+          outputJson(category);
+        }
+      )
+    );
+
+  cmd
     .command('update')
     .description('Update category details')
     .argument('<id>', 'Category ID')
