@@ -344,6 +344,18 @@ export class YnabClient {
     return response.data.transaction;
   }
 
+  async createTransactions(transactions: ynab.PostTransactionsWrapper, budgetId?: string) {
+    const api = await this.getApi();
+    const id = await this.getBudgetId(budgetId);
+    const response = await api.transactions.createTransaction(id, transactions);
+    return {
+      transaction_ids: response.data.transaction_ids,
+      duplicate_import_ids: response.data.duplicate_import_ids ?? [],
+      transactions: response.data.transactions ?? [],
+      server_knowledge: response.data.server_knowledge,
+    };
+  }
+
   async updateTransaction(
     transactionId: string,
     transactionData: ynab.PutTransactionWrapper,

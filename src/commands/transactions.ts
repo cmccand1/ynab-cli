@@ -13,7 +13,7 @@ import {
   type SummaryTransaction,
 } from '../lib/utils.js';
 import { withErrorHandling, requireConfirmation, buildUpdateObject, parseNumberOption, parseIntegerOption } from '../lib/command-utils.js';
-import { validateTransactionSplits, validateBatchUpdates } from '../lib/schemas.js';
+import { validateTransactionSplits, validateBatchUpdates, validateBatchCreates } from '../lib/schemas.js';
 import { parseDate, todayDate } from '../lib/dates.js';
 import type { CommandOptions } from '../types/index.js';
 
@@ -397,6 +397,41 @@ export function createTransactionsCommand(): Command {
           outputJson(result);
         }
       )
+    );
+
+  cmd
+    .command('batch-create')
+    .description(
+      'Create multiple transactions in a single API call. Amounts should be in dollars (e.g., -21.40).'
+    )
+    .requiredOption(
+      '--transactions <json>',
+      'JSON array of new transactions. Each needs "account_id", "date" and "amount"; pass "import_id" to make retries safe. Example: [{"account_id": "acc1", "date": "2026-10-01", "amount": -27.00, "payee_name": "Cafe", "import_id": "venmo:123"}]'
+    )
+    .option('-b, --budget <id>', 'Budget ID')
+    .action(
+      withErrorHandling(async (options: { transactions: string; budget?: string } & CommandOptions) => {
+        let parsed;
+        try {
+          parsed = JSON.parse(options.transactions);
+        } catch {
+          throw new YnabCliError('Invalid JSON in --transactions parameter', 400);
+        }
+
+        const creates = validateBatchCreates(parsed);
+
+        const transactionsInMilliunits = creates.map((transaction) => ({
+          ...transaction,
+          date: parseDate(transaction.date),
+          amount: amountToMilliunits(transaction.amount),
+        }));
+
+        const result = await client.createTransactions(
+          { transactions: transactionsInMilliunits as Parameters<typeof client.createTransactions>[0]['transactions'] },
+          options.budget
+        );
+        outputJson(result);
+      })
     );
 
   cmd

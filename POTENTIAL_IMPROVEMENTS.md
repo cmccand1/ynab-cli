@@ -36,6 +36,14 @@ Add `--limit` and `--fields` to all list commands (only transaction lists have t
 
 ## Lower impact
 
+### Filter out hidden and deleted categories
+
+`categories list` returns hidden (retired) and deleted categories alongside live ones, so callers must filter with `jq` to avoid proposing a retired category. A flag such as `--active` would make the safe default one word.
+
+### MCP has no bulk create
+
+The CLI has `transactions batch-create`; the MCP server has no matching tool, so MCP callers still create one transaction per request.
+
 ### Inconsistent flag names
 
 The same concept is `--account` / `--category` / `--payee` on `transactions list` but `--category-id` / `--payee-id` (and `--account`) on `transactions create` and `update`.
